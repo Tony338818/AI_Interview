@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 
 from .models import Coupon, Product
 
@@ -20,7 +20,10 @@ def build_quote(items, coupon_code=None):
     )
 
     subtotal = sum(
-        (products[item["sku"]].unit_price for item in items),
+        (
+            products[item["sku"]].unit_price * item["quantity"]
+            for item in items
+        ),
         start=Decimal("0.00"),
     )
 
@@ -30,12 +33,15 @@ def build_quote(items, coupon_code=None):
         if coupon:
             discount = (
                 subtotal * Decimal(coupon.percent_discount) / Decimal("100")
-            ).quantize(PENNY)
+            ).quantize(PENNY, ROUND_HALF_UP)
+            print(f'Got here: {discount}')
 
     total = subtotal - discount
+    print(f'Discount: {discount}')
     return Quote(
-        subtotal=subtotal.quantize(PENNY),
+        subtotal=subtotal.quantize(PENNY, ROUND_HALF_UP),
         discount=discount,
-        total=total.quantize(PENNY),
+        total=total.quantize(PENNY, ROUND_HALF_UP),
     )
+    
 
